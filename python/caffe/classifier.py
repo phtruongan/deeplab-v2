@@ -87,12 +87,15 @@ class Classifier(caffe.Net):
                             dtype=np.float32)
         for ix, in_ in enumerate(input_):
             caffe_in[ix] = self.transformer.preprocess(self.inputs[0], in_)
-        out = self.forward_all(**{self.inputs[0]: caffe_in})
+        out = self.forward_all(**{self.inputs[0]: caffe_in, 'blobs':['fc7']})
         predictions = out[self.outputs[0]]
+        fc7_features = out['fc7']
 
         # For oversampling, average predictions across crops.
         if oversample:
             predictions = predictions.reshape((len(predictions) / 10, 10, -1))
             predictions = predictions.mean(1)
+            fc7_features = fc7_features.reshape((len(predictions) / 10, 10, -1))
+            fc7_features = fc7_features.mean(1)
 
-        return predictions
+        return predictions, fc7_features
